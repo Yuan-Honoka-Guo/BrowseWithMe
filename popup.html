@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Browse With Me</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Browse With Me</h1>
+      <p class="subtitle">Your AI Browsing Copilot</p>
+    </header>
+
+    <section class="status-section">
+      <div id="aiStatus" class="status-indicator">
+        <span class="status-dot"></span>
+        <span class="status-text">Checking AI status...</span>
+      </div>
+      <button id="downloadModelBtn" class="download-btn" style="display: none;">
+        Download AI Model
+      </button>
+      <div id="downloadStatus" class="download-status" style="display: none;"></div>
+    </section>
+
+    <section class="task-section">
+      <label for="taskInput">Current Task:</label>
+      <textarea
+        id="taskInput"
+        placeholder="Tell me what you're trying to accomplish..."
+        rows="3"
+      ></textarea>
+      <button id="updateTaskBtn" class="primary-btn">Update Task</button>
+    </section>
+
+    <section class="suggestions-section">
+      <h2>Page Insights</h2>
+      <div id="suggestionsContainer" class="suggestions-container">
+        <p class="placeholder">Click "Analyze Page" to get AI-powered insights</p>
+      </div>
+      <button id="analyzePageBtn" class="primary-btn">Analyze Page</button>
+    </section>
+
+    <section class="summary-section">
+      <h2>Page Summary</h2>
+      <div class="summary-type-selector">
+        <select id="summaryType">
+          <option value="tldr">TL;DR</option>
+          <option value="key-points">Key Points</option>
+          <option value="teaser">Teaser</option>
+          <option value="headline">Headline</option>
+        </select>
+        <button id="summarizeBtn" class="secondary-btn">Summarize</button>
+      </div>
+      <div id="summaryContainer" class="summary-container">
+        <p class="placeholder">No summary yet</p>
+      </div>
+    </section>
+
+    <section class="history-section">
+      <h2>Browsing Context</h2>
+      <div id="historyContainer" class="history-container">
+        <p class="placeholder">No browsing history yet</p>
+      </div>
+      <button id="refreshHistoryBtn" class="secondary-btn">Refresh History</button>
+    </section>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

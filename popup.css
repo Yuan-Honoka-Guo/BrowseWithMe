@@ -1,0 +1,288 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+  background: #f5f5f5;
+  width: 400px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.container {
+  padding: 16px;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+h1 {
+  font-size: 24px;
+  color: #1a73e8;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  font-size: 12px;
+  color: #666;
+}
+
+h2 {
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: #333;
+}
+
+section {
+  margin-bottom: 20px;
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.status-section {
+  padding: 12px 16px;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f0ad4e;
+  animation: pulse 2s infinite;
+}
+
+.status-dot.ready {
+  background: #5cb85c;
+  animation: none;
+}
+
+.status-dot.error {
+  background: #d9534f;
+  animation: none;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.status-text {
+  font-size: 13px;
+  color: #666;
+}
+
+.download-btn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 16px;
+  background: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.download-btn:hover {
+  background: #d97706;
+}
+
+.download-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.download-status {
+  margin-top: 12px;
+  padding: 10px;
+  background: #e0f2fe;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #0369a1;
+  line-height: 1.5;
+}
+
+.download-status.success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.download-status.error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #555;
+}
+
+textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 13px;
+  resize: vertical;
+  margin-bottom: 10px;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: #1a73e8;
+}
+
+button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.primary-btn {
+  background: #1a73e8;
+  color: white;
+  width: 100%;
+}
+
+.primary-btn:hover {
+  background: #1557b0;
+}
+
+.primary-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.secondary-btn {
+  background: #f1f3f4;
+  color: #333;
+  width: 100%;
+}
+
+.secondary-btn:hover {
+  background: #e8eaed;
+}
+
+.suggestions-container,
+.summary-container,
+.history-container {
+  min-height: 60px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.placeholder {
+  color: #999;
+  font-style: italic;
+}
+
+.suggestion-text,
+.summary-text {
+  color: #333;
+  white-space: pre-wrap;
+}
+
+.summary-type-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.summary-type-selector select {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  background: white;
+}
+
+.summary-type-selector select:focus {
+  outline: none;
+  border-color: #1a73e8;
+}
+
+.summary-type-selector button {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+.history-item {
+  padding: 10px;
+  margin-bottom: 8px;
+  background: white;
+  border-radius: 4px;
+  border-left: 3px solid #1a73e8;
+}
+
+.history-item-title {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.history-item-url {
+  font-size: 11px;
+  color: #666;
+  margin-bottom: 6px;
+  word-break: break-all;
+}
+
+.history-item-summary {
+  font-size: 12px;
+  color: #555;
+  line-height: 1.4;
+}
+
+.history-item-time {
+  font-size: 11px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.loading {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+}
+
+.error {
+  color: #d9534f;
+  font-size: 12px;
+  padding: 8px;
+  background: #ffe6e6;
+  border-radius: 4px;
+  margin-top: 8px;
+}

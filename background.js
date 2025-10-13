@@ -274,15 +274,13 @@ async function generateSuggestion(pageContext, specialInstructions = null) {
 
     if (currentTask) {
       prompt += `\n\nUser's current task: ${currentTask}`;
+    } else if (specialInstructions) {
+      prompt += `\n\nUser's instructions: ${specialInstructions}`;
     } else {
       prompt += '\n\nGenerate a helpful suggestion about this page.';
     }
 
-    if (browsingHistory && browsingHistory.length > 0) {
-      const recentPages = browsingHistory.slice(-3).map(page => page.title || page.url).join(', ');
-      prompt += `\n\nContext - Recent pages: ${recentPages}`;
-    }
-    prompt += '\n\n Return plain text for user only.'
+    prompt += '\n\n Return plain text with CRLF for user only.'
 
     // Get the suggestion from the model
     const suggestion = await session.prompt(prompt);
@@ -413,7 +411,7 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
           break;
 
         case 'generateSuggestion':
-          const suggestionResult = await generateSuggestion(request.pageContext);
+          const suggestionResult = await generateSuggestion(request.pageContext, request.specialInstructions);
           if (!suggestionResult.error) {
             // Store the suggestion for this page
             await storePageResult(request.url, 'suggestion', suggestionResult.suggestion);

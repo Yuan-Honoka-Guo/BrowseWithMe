@@ -215,6 +215,7 @@ function createCopilotUI() {
         const result = await chrome.runtime.sendMessage({
           action: 'generateSuggestion',
           pageContext: pageContent,
+          specialInstructions: 'role play Tree of Wisdom in PVZ, say something witty, ironic, or humorous about this webpage in 1-2 sentences. No hard feelings, just fun!',
           url: window.location.href
         });
 

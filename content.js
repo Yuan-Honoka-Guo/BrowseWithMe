@@ -197,10 +197,37 @@ function createCopilotUI() {
   const toggle = document.getElementById('copilot-toggle');
   const panel = document.getElementById('copilot-panel');
   const closeBtn = document.getElementById('copilot-close');
+  const content = document.getElementById('copilot-content');
 
-  toggle.addEventListener('click', () => {
+  toggle.addEventListener('click', async () => {
     const isVisible = panel.style.display !== 'none';
-    panel.style.display = isVisible ? 'none' : 'block';
+
+    if (isVisible) {
+      panel.style.display = 'none';
+    } else {
+      panel.style.display = 'block';
+
+      // Generate ironic/humorous comment about the page
+      content.innerHTML = '<p style="color: #666; font-style: italic;">Generating witty observation...</p>';
+
+      try {
+        const pageContent = extractPageContent();
+        const result = await chrome.runtime.sendMessage({
+          action: 'generateSuggestion',
+          pageContext: pageContent,
+          url: window.location.href
+        });
+
+        if (result.error) {
+          content.innerHTML = `<p style="color: #dc3545;">${result.error}</p>`;
+        } else {
+          content.innerHTML = `<p style="font-style: italic; color: #1a73e8;">💭 ${result.suggestion}</p>`;
+        }
+      } catch (error) {
+        console.error('Error generating comment:', error);
+        content.innerHTML = '<p style="color: #dc3545;">Oops! My witty circuits are temporarily offline. Try the extension popup instead!</p>';
+      }
+    }
   });
 
   closeBtn.addEventListener('click', () => {

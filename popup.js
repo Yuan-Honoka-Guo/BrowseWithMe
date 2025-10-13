@@ -17,6 +17,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Load browsing history
   await loadBrowsingHistory();
 
+  // Load previous results for this page (if any)
+  await loadPreviousResults();
+
   // Setup event listeners
   setupEventListeners();
 });
@@ -96,6 +99,33 @@ async function loadBrowsingHistory() {
   }
 }
 
+// Load previous results for current page
+async function loadPreviousResults() {
+  const summaryContainer = document.getElementById('summaryContainer');
+  const suggestionsContainer = document.getElementById('suggestionsContainer');
+
+  try {
+    const response = await chrome.runtime.sendMessage({
+      action: 'getPageResult',
+      url: currentTab.url
+    });
+
+    if (response) {
+      // Restore summary if it exists
+      if (response.summary) {
+        summaryContainer.innerHTML = `<p class="summary-text">${response.summary}</p>`;
+      }
+
+      // Restore suggestion if it exists
+      if (response.suggestion) {
+        suggestionsContainer.innerHTML = `<p class="suggestion-text">${response.suggestion}</p>`;
+      }
+    }
+  } catch (error) {
+    console.error('Error loading previous results:', error);
+  }
+}
+
 // Create history item element
 function createHistoryItem(item) {
   const div = document.createElement('div');
@@ -146,6 +176,7 @@ function setupEventListeners() {
   document.getElementById('analyzePageBtn').addEventListener('click', analyzePage);
   document.getElementById('summarizeBtn').addEventListener('click', summarizePage);
   document.getElementById('refreshHistoryBtn').addEventListener('click', loadBrowsingHistory);
+  document.getElementById('clearHistoryBtn').addEventListener('click', clearAllHistory);
   document.getElementById('downloadModelBtn').addEventListener('click', downloadModel);
 }
 
@@ -264,7 +295,8 @@ async function analyzePage() {
     // Generate suggestion
     const result = await chrome.runtime.sendMessage({
       action: 'generateSuggestion',
-      pageContext: response.content
+      pageContext: response.content,
+      url: currentTab.url
     });
 
     if (result.error) {
@@ -315,5 +347,42 @@ async function summarizePage() {
   } finally {
     summarizeBtn.textContent = 'Summarize';
     summarizeBtn.disabled = false;
+  }
+}
+
+// Clear all history
+async function clearAllHistory() {
+  const clearBtn = document.getElementById('clearHistoryBtn');
+
+  // Confirm with user
+  if (!confirm('Are you sure you want to clear all browsing history and stored results? This cannot be undone.')) {
+    return;
+  }
+
+  clearBtn.disabled = true;
+  clearBtn.textContent = 'Clearing...';
+
+  try {
+    await chrome.runtime.sendMessage({
+      action: 'clearAllHistory'
+    });
+
+    // Clear current display
+    document.getElementById('historyContainer').innerHTML = '<p class="placeholder">No browsing history yet</p>';
+    document.getElementById('summaryContainer').innerHTML = '<p class="placeholder">No summary yet</p>';
+    document.getElementById('suggestionsContainer').innerHTML = '<p class="placeholder">Click "Analyze Page" to get AI-powered insights</p>';
+
+    clearBtn.textContent = 'Cleared!';
+    setTimeout(() => {
+      clearBtn.textContent = 'Clear All';
+      clearBtn.disabled = false;
+    }, 1500);
+  } catch (error) {
+    console.error('Error clearing history:', error);
+    clearBtn.textContent = 'Error';
+    setTimeout(() => {
+      clearBtn.textContent = 'Clear All';
+      clearBtn.disabled = false;
+    }, 1500);
   }
 }

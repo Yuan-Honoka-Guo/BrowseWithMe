@@ -4,6 +4,7 @@
 let browsingHistory = [];
 let currentTask = '';
 let downloadProgressPorts = []; // Ports for sending progress updates to popup
+let pageResults = {}; // Store summaries and suggestions per URL: { url: { summary, suggestion, timestamp } }
 
 // Initialize AI capabilities check
 async function checkAICapabilities() {
@@ -235,7 +236,7 @@ async function summarizeContent(text, type = 'tldr', url, title) {
 }
 
 // Generate suggestions using Prompter API
-async function generateSuggestion(pageContext) {
+async function generateSuggestion(pageContext, specialInstructions = null) {
   const { browsingHistory, currentTask } = await getBrowsingContext();
   console.log("Generating suggestion with current task:", currentTask);
 
@@ -268,15 +269,20 @@ async function generateSuggestion(pageContext) {
 
     if (browsingHistory && browsingHistory.length > 0) {
       const recentPages = browsingHistory.slice(-3).map(page => page.title || page.url).join(', ');
-      prompt += `\n\nRecent browsing history: ${recentPages}`;
+      prompt += `\n\nContext - Recent pages: ${recentPages}`;
     }
 
     if (currentTask) {
       prompt += `\n\nUser's current task: ${currentTask}`;
     } else {
-      prompt += '\n\nGenerate a helpful or humorous suggestion about this page.';
+      prompt += '\n\nGenerate a helpful suggestion about this page.';
     }
-    prompt += '\n\n Return plain text.'
+
+    if (browsingHistory && browsingHistory.length > 0) {
+      const recentPages = browsingHistory.slice(-3).map(page => page.title || page.url).join(', ');
+      prompt += `\n\nContext - Recent pages: ${recentPages}`;
+    }
+    prompt += '\n\n Return plain text for user only.'
 
     // Get the suggestion from the model
     const suggestion = await session.prompt(prompt);
@@ -311,20 +317,55 @@ async function storeBrowsingContext(pageInfo) {
 
 // Get browsing context
 async function getBrowsingContext() {
-  const stored = await chrome.storage.local.get(['browsingHistory', 'currentTask']);
+  const stored = await chrome.storage.local.get(['browsingHistory', 'currentTask', 'pageResults']);
   if (stored.browsingHistory) {
     browsingHistory = stored.browsingHistory;
   }
   if (stored.currentTask) {
     currentTask = stored.currentTask;
   }
+  if (stored.pageResults) {
+    pageResults = stored.pageResults;
+  }
   return { browsingHistory, currentTask };
+}
+
+// Store page results (summary and/or suggestion)
+async function storePageResult(url, resultType, resultData) {
+  if (!pageResults[url]) {
+    pageResults[url] = { timestamp: Date.now() };
+  }
+
+  pageResults[url][resultType] = resultData;
+  pageResults[url].timestamp = Date.now();
+
+  // Save to chrome.storage
+  await chrome.storage.local.set({ pageResults });
+}
+
+// Get page results for a specific URL
+async function getPageResult(url) {
+  const stored = await chrome.storage.local.get(['pageResults']);
+  if (stored.pageResults && stored.pageResults[url]) {
+    return stored.pageResults[url];
+  }
+  return null;
 }
 
 // Update current task
 async function updateCurrentTask(task) {
   currentTask = task;
   await chrome.storage.local.set({ currentTask });
+}
+
+// Clear all history and stored results
+async function clearAllHistory() {
+  browsingHistory = [];
+  pageResults = {};
+  await chrome.storage.local.set({
+    browsingHistory: [],
+    pageResults: {}
+  });
 }
 
 // Message handler
@@ -350,6 +391,8 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
               title: request.title,
               summary: summaryResult.summary
             });
+            // Store the summary for this page
+            await storePageResult(request.url, 'summary', summaryResult.summary);
           }
           sendResponse(summaryResult);
           break;
@@ -363,13 +406,24 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
               title: request.title,
               summary: pageResult.summary
             });
+            // Store the summary for this page
+            await storePageResult(request.url, 'summary', pageResult.summary);
           }
           sendResponse(pageResult);
           break;
 
         case 'generateSuggestion':
           const suggestionResult = await generateSuggestion(request.pageContext);
+          if (!suggestionResult.error) {
+            // Store the suggestion for this page
+            await storePageResult(request.url, 'suggestion', suggestionResult.suggestion);
+          }
           sendResponse(suggestionResult);
+          break;
+
+        case 'getPageResult':
+          const result = await getPageResult(request.url);
+          sendResponse(result || {});
           break;
 
         case 'getContext':
@@ -379,6 +433,11 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
 
         case 'updateTask':
           await updateCurrentTask(request.task);
+          sendResponse({ success: true });
+          break;
+
+        case 'clearAllHistory':
+          await clearAllHistory();
           sendResponse({ success: true });
           break;
 

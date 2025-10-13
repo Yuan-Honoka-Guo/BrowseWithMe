@@ -11,6 +11,7 @@
     <header>
       <h1>Browse With Me</h1>
       <p class="subtitle">Your AI Browsing Copilot</p>
+      
     </header>
 
     <section class="status-section">
@@ -72,7 +73,10 @@
       <div id="historyContainer" class="history-container">
         <p class="placeholder">No browsing history yet</p>
       </div>
-      <button id="refreshHistoryBtn" class="secondary-btn">Refresh History</button>
+      <div style="display: flex; gap: 8px;">
+        <button id="refreshHistoryBtn" class="secondary-btn">Refresh History</button>
+        <button id="clearHistoryBtn" class="secondary-btn" style="background-color: #dc3545; color: white;">Clear All</button>
+      </div>
     </section>
   </div>
 

@@ -85,6 +85,39 @@ function extractTextContent(element) {
   return text;
 }
 
+// Simple markdown to HTML converter for basic formatting
+function simpleMarkdownToHtml(text) {
+  if (!text) return '';
+
+  // Escape HTML first to prevent XSS
+  const escapeHtml = (str) => {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+
+  let html = escapeHtml(text);
+
+  // Bold: **text** or __text__
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
+
+  // Italic: *text* or _text_
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  html = html.replace(/_(.+?)_/g, '<em>$1</em>');
+
+  // Code: `code`
+  html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+
+  // Line breaks
+  html = html.replace(/\n/g, '<br>');
+
+  return html;
+}
+
 // Optional: Create a floating copilot UI on the page
 function createCopilotUI() {
   // Check if already created
@@ -222,7 +255,9 @@ function createCopilotUI() {
         if (result.error) {
           content.innerHTML = `<p style="color: #dc3545;">${result.error}</p>`;
         } else {
-          content.innerHTML = `<p style="font-style: italic; color: #1a73e8;">💭 ${result.suggestion}</p>`;
+          // Render markdown formatting in the suggestion
+          const renderedSuggestion = simpleMarkdownToHtml(result.suggestion);
+          content.innerHTML = `<div style="font-style: italic; color: #1a73e8;">💭 ${renderedSuggestion}</div>`;
         }
       } catch (error) {
         console.error('Error generating comment:', error);

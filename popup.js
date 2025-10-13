@@ -2,6 +2,25 @@
 
 let currentTab = null;
 
+// Helper function to render markdown as HTML
+function renderMarkdown(markdownText) {
+  if (!markdownText) return '';
+
+  // Use marked library to parse markdown to HTML
+  if (typeof marked !== 'undefined') {
+    // Configure marked for security
+    marked.setOptions({
+      breaks: true,
+      gfm: true,
+      sanitize: false // We trust the AI-generated content
+    });
+    return marked.parse(markdownText);
+  }
+
+  // Fallback: return as plain text if marked is not available
+  return markdownText;
+}
+
 // Initialize popup
 document.addEventListener('DOMContentLoaded', async () => {
   // Get current tab
@@ -113,12 +132,14 @@ async function loadPreviousResults() {
     if (response) {
       // Restore summary if it exists
       if (response.summary) {
-        summaryContainer.innerHTML = `<p class="summary-text">${response.summary}</p>`;
+        const renderedSummary = renderMarkdown(response.summary);
+        summaryContainer.innerHTML = `<div class="summary-text">${renderedSummary}</div>`;
       }
 
       // Restore suggestion if it exists
       if (response.suggestion) {
-        suggestionsContainer.innerHTML = `<p class="suggestion-text">${response.suggestion}</p>`;
+        const renderedSuggestion = renderMarkdown(response.suggestion);
+        suggestionsContainer.innerHTML = `<div class="suggestion-text">${renderedSuggestion}</div>`;
       }
     }
   } catch (error) {
@@ -149,7 +170,12 @@ function createHistoryItem(item) {
   if (item.summary) {
     const summary = document.createElement('div');
     summary.className = 'history-item-summary';
-    summary.textContent = item.summary.substring(0, 100) + (item.summary.length > 100 ? '...' : '');
+    // Render markdown and truncate for preview
+    const renderedSummary = renderMarkdown(item.summary);
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = renderedSummary;
+    const plainText = tempDiv.textContent || tempDiv.innerText || '';
+    summary.textContent = plainText.substring(0, 100) + (plainText.length > 100 ? '...' : '');
     div.appendChild(summary);
   }
 
@@ -303,7 +329,9 @@ async function analyzePage() {
       throw new Error(result.error);
     }
 
-    suggestionsContainer.innerHTML = `<p class="suggestion-text">${result.suggestion}</p>`;
+    // Render markdown to HTML
+    const renderedSuggestion = renderMarkdown(result.suggestion);
+    suggestionsContainer.innerHTML = `<div class="suggestion-text">${renderedSuggestion}</div>`;
   } catch (error) {
     console.error('Error analyzing page:', error);
     suggestionsContainer.innerHTML = `<p class="error">Error: ${error.message}</p>`;
@@ -337,7 +365,9 @@ async function summarizePage() {
       throw new Error(result.error);
     }
 
-    summaryContainer.innerHTML = `<p class="summary-text">${result.summary}</p>`;
+    // Render markdown to HTML
+    const renderedSummary = renderMarkdown(result.summary);
+    summaryContainer.innerHTML = `<div class="summary-text">${renderedSummary}</div>`;
 
     // Refresh history to show new entry
     await loadBrowsingHistory();

@@ -258,24 +258,25 @@ async function generateSuggestion(pageContext) {
 
     // Create a session with system prompt
     const session = await LanguageModel.create({
-      systemPrompt: 'You are a helpful and occasionally humorous browsing assistant. Provide concise, useful suggestions about web pages in 1-2 sentences.',
+      // initialPrompt: [{ role: 'system', content: 'You are a helpful and friendly assistant.'}],
       temperature: 0.8,
       topK: 3
     });
 
     // Build the prompt with context
-    let prompt = `Based on this page content:\n${pageContext.substring(0, 500)}...`;
-
-    if (currentTask) {
-      prompt += `\n\nUser's current task: ${currentTask}`;
-    }
+    let prompt = `You are a helpful and occasionally humorous browsing assistant. Provide concise, useful suggestions about web pages in 1-2 sentences.' \n\n Based on this page content:\n${pageContext}...`;
 
     if (browsingHistory && browsingHistory.length > 0) {
       const recentPages = browsingHistory.slice(-3).map(page => page.title || page.url).join(', ');
       prompt += `\n\nRecent browsing history: ${recentPages}`;
     }
 
-    prompt += '\n\nGenerate a helpful or humorous suggestion about this page.';
+    if (currentTask) {
+      prompt += `\n\nUser's current task: ${currentTask}`;
+    } else {
+      prompt += '\n\nGenerate a helpful or humorous suggestion about this page.';
+    }
+    prompt += '\n\n Return plain text.'
 
     // Get the suggestion from the model
     const suggestion = await session.prompt(prompt);

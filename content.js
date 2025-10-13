@@ -4,6 +4,7 @@
 // Listen for messages from popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'getPageContent') {
+    console.log("Content script received getPageContent request");
     const content = extractPageContent();
     sendResponse({ content });
   }

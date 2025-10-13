@@ -3,38 +3,24 @@
 
 let browsingHistory = [];
 let currentTask = '';
+let downloadProgressPorts = []; // Ports for sending progress updates to popup
 
 // Initialize AI capabilities check
 async function checkAICapabilities() {
   const capabilities = {
-    summarizer: 'unknown',
-    writer: 'unknown',
-    languageDetector: 'unknown'
+    Summarizer: 'unknown',
+    LanguageModel: 'unknown',
+    LanguageDetector: 'unknown'
   };
 
   try {
-    // Check Summarizer API (accessed as global object)
-    if (typeof self.ai !== 'undefined' && 'summarizer' in self.ai) {
-      const canSummarize = await self.ai.summarizer.capabilities();
-      capabilities.summarizer = canSummarize.available;
-    } else {
-      capabilities.summarizer = 'no';
-    }
-
-    // Check Writer API (accessed as global object)
-    if (typeof self.ai !== 'undefined' && 'writer' in self.ai) {
-      const canWrite = await self.ai.writer.capabilities();
-      capabilities.writer = canWrite.available;
-    } else {
-      capabilities.writer = 'no';
-    }
-
-    // Check Language Detector API (accessed as global object)
-    if (typeof self.ai !== 'undefined' && 'languageDetector' in self.ai) {
-      const canDetect = await self.ai.languageDetector.capabilities();
-      capabilities.languageDetector = canDetect.available;
-    } else {
-      capabilities.languageDetector = 'no';
+    for (const api of ['Summarizer', 'LanguageModel', 'LanguageDetector']) {
+      if (!(api in self)) {
+        capabilities[api] = 'unsupported';
+      } else {
+        const availability = await self[api].availability();
+        capabilities[api] = availability;
+      }
     }
   } catch (error) {
     console.error('Error checking AI capabilities:', error);
@@ -44,70 +30,132 @@ async function checkAICapabilities() {
 }
 
 // Trigger AI model download (requires user activation)
-async function downloadAIModel(apiType = 'summarizer') {
+async function downloadAIModel(apiType = 'Summarizer') {
   try {
     let result = { success: false, message: '' };
 
-    // Check if AI is available at all
-    if (typeof self.ai === 'undefined') {
-      result.message = 'Chrome AI APIs are not available. Please ensure you have enabled the required flags in chrome://flags and are using Chrome 138+';
+    // Check if API is available at all
+    if (!(apiType in self)) {
+      result.message = 'Chrome ' + apiType + ' API is not available. Please enable required flags in chrome://flags';
       return result;
     }
 
-    if (apiType === 'summarizer' && 'summarizer' in self.ai) {
-      const capabilities = await self.ai.summarizer.capabilities();
+    if (apiType === 'Summarizer') {
+      const availability = await Summarizer.availability();
 
-      if (capabilities.available === 'no') {
-        result.message = 'Summarizer API not supported on this device';
+      if (availability === 'available') {
+        result.message = 'Summarizer model is already downloaded and available.';
         return result;
       }
 
-      if (capabilities.available === 'after-download') {
+      if (availability === 'downloadable') {
         result.message = 'Model needs to be downloaded. Starting download...';
 
         // Creating a session will trigger the download (requires user activation)
-        const summarizer = await self.ai.summarizer.create();
+        const summarizer = await Summarizer.create({
+          monitor(m) {
+            m.addEventListener('downloadprogress', (e) => {
+              const progress = Math.round(e.loaded * 100);
+              console.log(`Downloaded ${progress}%`);
+
+              // Broadcast progress to all connected popups
+              downloadProgressPorts.forEach(port => {
+                try {
+                  port.postMessage({
+                    type: 'downloadProgress',
+                    progress: progress,
+                    loaded: e.loaded,
+                    total: e.total || 1
+                  });
+                } catch (err) {
+                  console.error('Error sending progress:', err);
+                }
+              });
+            });
+          }
+        });
         summarizer.destroy();
 
+        // Send completion message
+        downloadProgressPorts.forEach(port => {
+          try {
+            port.postMessage({
+              type: 'downloadComplete',
+              progress: 100
+            });
+          } catch (err) {
+            console.error('Error sending completion:', err);
+          }
+        });
+
         result.success = true;
-        result.message = 'Model download started. This may take several minutes.';
+        result.message = 'Summarizer model download completed successfully!';
         return result;
       }
 
-      if (capabilities.available === 'readily') {
-        result.success = true;
-        result.message = 'Model already available';
-        return result;
-      }
+      result.message = 'Summarizer is not available on this device.';
+      return result;
     }
 
-    if (apiType === 'writer' && 'writer' in self.ai) {
-      const capabilities = await self.ai.writer.capabilities();
+    if (apiType === 'LanguageModel') {
+      const availability = await LanguageModel.availability();
 
-      if (capabilities.available === 'no') {
-        result.message = 'Writer API not supported on this device';
+      if (availability === 'available') {
+        result.success = true;
+        result.message = 'LanguageModel is already downloaded and available.';
         return result;
       }
 
-      if (capabilities.available === 'after-download') {
-        result.message = 'Model needs to be downloaded. Starting download...';
+      if (availability === 'downloadable') {
+        result.message = 'LanguageModel needs to be downloaded. Starting download...';
 
-        const writer = await self.ai.writer.create();
-        writer.destroy();
+        // Creating a session will trigger the download (requires user activation)
+        const session = await LanguageModel.create({
+          monitor(m) {
+            m.addEventListener('downloadprogress', (e) => {
+              const progress = Math.round(e.loaded * 100);
+              console.log(`Downloaded ${progress}%`);
+
+              // Broadcast progress to all connected popups
+              downloadProgressPorts.forEach(port => {
+                try {
+                  port.postMessage({
+                    type: 'downloadProgress',
+                    progress: progress,
+                    loaded: e.loaded,
+                    total: e.total || 1
+                  });
+                } catch (err) {
+                  console.error('Error sending progress:', err);
+                }
+              });
+            });
+          }
+        });
+        session.destroy();
+
+        // Send completion message
+        downloadProgressPorts.forEach(port => {
+          try {
+            port.postMessage({
+              type: 'downloadComplete',
+              progress: 100
+            });
+          } catch (err) {
+            console.error('Error sending completion:', err);
+          }
+        });
 
         result.success = true;
-        result.message = 'Model download started. This may take several minutes.';
+        result.message = 'LanguageModel download completed successfully!';
         return result;
       }
 
-      if (capabilities.available === 'readily') {
-        result.success = true;
-        result.message = 'Model already available';
-        return result;
-      }
+      result.message = 'LanguageModel is not available on this device.';
+      return result;
     }
 
-    result.message = 'Unknown API type or API not available';
+    result.message = 'Unknown API type: ' + apiType;
     return result;
   } catch (error) {
     console.error('Error downloading model:', error);
@@ -115,33 +163,69 @@ async function downloadAIModel(apiType = 'summarizer') {
   }
 }
 
-// Summarize page content
-async function summarizeContent(text, type = 'tldr') {
+// Extract page content from tab (with fallback injection)
+async function getPageContent(tabId) {
   try {
-    if (typeof self.ai === 'undefined' || !('summarizer' in self.ai)) {
-      return { error: 'Summarizer API not available. Please enable the required flags in chrome://flags' };
+    // Try to send message to existing content script first
+    const response = await chrome.tabs.sendMessage(tabId, { action: 'getPageContent' });
+    return { content: response.content };
+  } catch (error) {
+    // Content script not loaded, inject it programmatically
+    console.log('Content script not found, injecting...');
+
+    try {
+      // Inject the content script
+      await chrome.scripting.executeScript({
+        target: { tabId: tabId },
+        files: ['content.js']
+      });
+
+      // Wait a moment for script to initialize
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Try again to get content
+      const response = await chrome.tabs.sendMessage(tabId, { action: 'getPageContent' });
+      return { content: response.content };
+    } catch (injectError) {
+      console.error('Failed to inject content script:', injectError);
+      return { error: 'Cannot access this page. Content scripts are not allowed on chrome:// pages or extension pages.' };
+    }
+  }
+}
+
+// Summarize page - extracts content and summarizes
+async function summarizePage(tabId, type = 'tldr', url, title) {
+  console.log("background.js: summarizePage called for tab", tabId);
+
+  // Extract page content
+  const contentResult = await getPageContent(tabId);
+  if (contentResult.error) {
+    return { error: contentResult.error };
+  }
+  
+  if (!contentResult.content) {
+    return { error: 'Could not extract page content' };
+  }
+  console.log("Extracted content length:", contentResult.content.length);
+  // Summarize the content
+  return await summarizeContent(contentResult.content, type, url, title);
+}
+
+// Summarize page content
+async function summarizeContent(text, type = 'tldr', url, title) {
+  console.log("background.js: summarizeContent called");
+  try {
+    if (!('Summarizer' in self)) {
+      return { error: 'Summarizer API not downloaded or not supported if you have downloaded that.' };
     }
 
-    const canSummarize = await self.ai.summarizer.capabilities();
-
-    if (canSummarize.available === 'no') {
-      return { error: 'Summarizer API not supported on this device' };
+    const availability = await Summarizer.availability();
+    if (availability === 'unavailable') {
+      return { error: 'Summarizer API is unavailable.' };
     }
 
-    if (canSummarize.available === 'after-download') {
-      return { error: 'AI model needs to be downloaded first. Click the "Download AI Model" button.' };
-    }
-
-    const summarizer = await self.ai.summarizer.create({
-      type: type,
-      format: 'markdown',
-      length: 'medium'
-    });
-
-    const summary = await summarizer.summarize(text, {
-      context: currentTask ? `User's current task: ${currentTask}` : ''
-    });
-
+    const summarizer = await Summarizer.create();
+    const summary = await summarizer.summarize(text);
     summarizer.destroy();
     return { summary };
   } catch (error) {
@@ -150,34 +234,55 @@ async function summarizeContent(text, type = 'tldr') {
   }
 }
 
-// Generate suggestions using Writer API
+// Generate suggestions using Prompter API
 async function generateSuggestion(pageContext) {
+  const { browsingHistory, currentTask } = await getBrowsingContext();
+  console.log("Generating suggestion with current task:", currentTask);
+
   try {
-    if (typeof self.ai === 'undefined' || !('writer' in self.ai)) {
-      return { error: 'Writer API not available. Please enable the required flags in chrome://flags' };
+    // Check if LanguageModel API is available
+    if (!('LanguageModel' in self)) {
+      return { error: 'LanguageModel API not available. Please enable chrome://flags/#optimization-guide-on-device-model' };
     }
 
-    const canWrite = await self.ai.writer.capabilities();
+    // Check availability status
+    const availability = await LanguageModel.availability();
 
-    if (canWrite.available === 'no') {
-      return { error: 'Writer API not supported on this device' };
+    if (availability === 'unavailable') {
+      return { error: 'LanguageModel API not supported on this device' };
     }
 
-    if (canWrite.available === 'after-download') {
+    if (availability === 'downloadable') {
       return { error: 'AI model needs to be downloaded first. Click the "Download AI Model" button.' };
     }
 
-    const writer = await self.ai.writer.create({
-      tone: 'casual',
-      format: 'plain-text',
-      length: 'short'
+    // Create a session with system prompt
+    const session = await LanguageModel.create({
+      systemPrompt: 'You are a helpful and occasionally humorous browsing assistant. Provide concise, useful suggestions about web pages in 1-2 sentences.',
+      temperature: 0.8,
+      topK: 3
     });
 
-    const prompt = `Based on this page content: ${pageContext.substring(0, 500)}...\n\n${currentTask ? `User's task: ${currentTask}\n\n` : ''}Generate a helpful or humorous suggestion about this page.`;
+    // Build the prompt with context
+    let prompt = `Based on this page content:\n${pageContext.substring(0, 500)}...`;
 
-    const suggestion = await writer.write(prompt);
+    if (currentTask) {
+      prompt += `\n\nUser's current task: ${currentTask}`;
+    }
 
-    writer.destroy();
+    if (browsingHistory && browsingHistory.length > 0) {
+      const recentPages = browsingHistory.slice(-3).map(page => page.title || page.url).join(', ');
+      prompt += `\n\nRecent browsing history: ${recentPages}`;
+    }
+
+    prompt += '\n\nGenerate a helpful or humorous suggestion about this page.';
+
+    // Get the suggestion from the model
+    const suggestion = await session.prompt(prompt);
+
+    // Clean up the session
+    session.destroy();
+
     return { suggestion };
   } catch (error) {
     console.error('Error generating suggestion:', error);
@@ -248,6 +353,19 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
           sendResponse(summaryResult);
           break;
 
+        case 'summarizePage':
+          // Extract content and summarize in background
+          const pageResult = await summarizePage(request.tabId, request.type, request.url, request.title);
+          if (!pageResult.error) {
+            await storeBrowsingContext({
+              url: request.url,
+              title: request.title,
+              summary: pageResult.summary
+            });
+          }
+          sendResponse(pageResult);
+          break;
+
         case 'generateSuggestion':
           const suggestionResult = await generateSuggestion(request.pageContext);
           sendResponse(suggestionResult);
@@ -273,6 +391,22 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   })();
 
   return true; // Keep message channel open for async response
+});
+
+// Handle long-lived connections for progress updates
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name === 'downloadProgress') {
+    downloadProgressPorts.push(port);
+    console.log('Popup connected for progress updates');
+
+    port.onDisconnect.addListener(() => {
+      const index = downloadProgressPorts.indexOf(port);
+      if (index > -1) {
+        downloadProgressPorts.splice(index, 1);
+      }
+      console.log('Popup disconnected from progress updates');
+    });
+  }
 });
 
 // Initialize on installation

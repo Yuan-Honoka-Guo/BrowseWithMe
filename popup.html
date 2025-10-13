@@ -21,6 +21,15 @@
       <button id="downloadModelBtn" class="download-btn" style="display: none;">
         Download AI Model
       </button>
+      <div id="downloadProgress" class="download-progress" style="display: none;">
+        <div class="progress-info">
+          <span class="progress-text">Downloading model...</span>
+          <span class="progress-percentage">0%</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" id="progressBarFill"></div>
+        </div>
+      </div>
       <div id="downloadStatus" class="download-status" style="display: none;"></div>
     </section>
 
@@ -32,14 +41,6 @@
         rows="3"
       ></textarea>
       <button id="updateTaskBtn" class="primary-btn">Update Task</button>
-    </section>
-
-    <section class="suggestions-section">
-      <h2>Page Insights</h2>
-      <div id="suggestionsContainer" class="suggestions-container">
-        <p class="placeholder">Click "Analyze Page" to get AI-powered insights</p>
-      </div>
-      <button id="analyzePageBtn" class="primary-btn">Analyze Page</button>
     </section>
 
     <section class="summary-section">
@@ -56,6 +57,14 @@
       <div id="summaryContainer" class="summary-container">
         <p class="placeholder">No summary yet</p>
       </div>
+    </section>
+
+    <section class="suggestions-section">
+      <h2>Page Insights</h2>
+      <div id="suggestionsContainer" class="suggestions-container">
+        <p class="placeholder">Click "Analyze Page" to get AI-powered insights</p>
+      </div>
+      <button id="analyzePageBtn" class="primary-btn">Analyze Page</button>
     </section>
 
     <section class="history-section">

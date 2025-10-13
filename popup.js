@@ -31,13 +31,13 @@ async function checkAIStatus() {
     const response = await chrome.runtime.sendMessage({ action: 'checkCapabilities' });
 
     // Check if any API is readily available
-    const isReady = response.summarizer === 'readily' || response.writer === 'readily';
+    const isReady = response.Summarizer === 'available';
 
     // Check if download is needed
-    const needsDownload = response.summarizer === 'after-download' || response.writer === 'after-download';
+    const needsDownload = response.Summarizer === 'downloadable';
 
-    // Check if APIs are unavailable
-    const isUnavailable = response.summarizer === 'no' && response.writer === 'no';
+    // Check if APIs are unsupported
+    const isUnsupported = response.Summarizer === 'unsupported';
 
     if (isReady) {
       statusDot.classList.add('ready');
@@ -47,7 +47,7 @@ async function checkAIStatus() {
       statusDot.classList.remove('ready');
       statusText.textContent = 'AI Model needs to be downloaded';
       downloadBtn.style.display = 'block';
-    } else if (isUnavailable) {
+    } else if (isUnsupported) {
       statusDot.classList.add('error');
       statusText.textContent = 'AI APIs not available on this device';
       downloadBtn.style.display = 'none';
@@ -153,37 +153,68 @@ function setupEventListeners() {
 async function downloadModel() {
   const downloadBtn = document.getElementById('downloadModelBtn');
   const downloadStatus = document.getElementById('downloadStatus');
+  const downloadProgress = document.getElementById('downloadProgress');
+  const progressBarFill = document.getElementById('progressBarFill');
+  const progressPercentage = document.querySelector('.progress-percentage');
 
   downloadBtn.disabled = true;
   downloadBtn.textContent = 'Downloading...';
-  downloadStatus.style.display = 'block';
-  downloadStatus.className = 'download-status';
-  downloadStatus.textContent = 'Starting model download. This may take several minutes and requires ~22 GB of storage...';
+  downloadBtn.style.display = 'none';
+  downloadStatus.style.display = 'none';
+  downloadProgress.style.display = 'block';
+
+  // Connect to background for progress updates
+  const port = chrome.runtime.connect({ name: 'downloadProgress' });
+
+  port.onMessage.addListener((message) => {
+    if (message.type === 'downloadProgress') {
+      const progress = message.progress || 0;
+      progressBarFill.style.width = `${progress}%`;
+      progressPercentage.textContent = `${progress}%`;
+      console.log('Download progress:', progress + '%');
+    } else if (message.type === 'downloadComplete') {
+      progressBarFill.style.width = '100%';
+      progressPercentage.textContent = '100%';
+
+      // Show success message after a short delay
+      setTimeout(() => {
+        downloadProgress.style.display = 'none';
+        downloadStatus.style.display = 'block';
+        downloadStatus.className = 'download-status success';
+        downloadStatus.textContent = 'Model download completed successfully! You can now use the AI features.';
+
+        // Refresh AI status
+        setTimeout(async () => {
+          await checkAIStatus();
+        }, 2000);
+      }, 1000);
+    }
+  });
+
+  port.onDisconnect.addListener(() => {
+    console.log('Disconnected from progress updates');
+  });
 
   try {
-    // Try to download summarizer model first
+    // Start the download (this will trigger progress updates via the port)
     const result = await chrome.runtime.sendMessage({
       action: 'downloadModel',
-      apiType: 'summarizer'
+      apiType: 'Summarizer'
     });
 
-    if (result.success) {
-      downloadStatus.className = 'download-status success';
-      downloadStatus.textContent = result.message + ' You can now use the AI features!';
-
-      // Refresh AI status
-      setTimeout(async () => {
-        await checkAIStatus();
-      }, 2000);
-    } else {
+    if (!result.success) {
       throw new Error(result.message);
     }
   } catch (error) {
     console.error('Error downloading model:', error);
+    downloadProgress.style.display = 'none';
+    downloadStatus.style.display = 'block';
     downloadStatus.className = 'download-status error';
     downloadStatus.textContent = `Error: ${error.message}. Please ensure you have enabled the required flags in chrome://flags and have enough storage space.`;
     downloadBtn.disabled = false;
     downloadBtn.textContent = 'Retry Download';
+    downloadBtn.style.display = 'block';
+    port.disconnect();
   }
 }
 
@@ -195,7 +226,7 @@ async function updateTask() {
 
   updateBtn.disabled = true;
   updateBtn.textContent = 'Updating...';
-
+  console.log('Updating task to:', task);
   try {
     await chrome.runtime.sendMessage({
       action: 'updateTask',
@@ -224,7 +255,7 @@ async function analyzePage() {
 
   try {
     // Get page content from content script
-    const [response] = await chrome.tabs.sendMessage(currentTab.id, { action: 'getPageContent' });
+    const response = await chrome.tabs.sendMessage(currentTab.id, { action: 'getPageContent' });
 
     if (!response || !response.content) {
       throw new Error('Could not extract page content');
@@ -261,17 +292,10 @@ async function summarizePage() {
   summaryContainer.innerHTML = '<p class="loading">Generating summary...</p>';
 
   try {
-    // Get page content from content script
-    const [response] = await chrome.tabs.sendMessage(currentTab.id, { action: 'getPageContent' });
-
-    if (!response || !response.content) {
-      throw new Error('Could not extract page content');
-    }
-
-    // Generate summary
+    // Let background handle content extraction and summarization
     const result = await chrome.runtime.sendMessage({
-      action: 'summarize',
-      text: response.content,
+      action: 'summarizePage',
+      tabId: currentTab.id,
       type: summaryType,
       url: currentTab.url,
       title: currentTab.title

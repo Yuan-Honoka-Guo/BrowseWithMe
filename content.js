@@ -135,7 +135,7 @@ function createCopilotUI() {
     </div>
     <div id="copilot-panel" style="display: none;">
       <div id="copilot-header">
-        <h3>Browse With Me</h3>
+        <h3>Wisdom Copilot</h3>
         <button id="copilot-close">×</button>
       </div>
       <div id="copilot-content">

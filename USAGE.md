@@ -75,7 +75,6 @@ The extension automatically remembers pages you've analyzed and summarized.
 1. Click the extension icon
 2. Scroll to "Browsing Context" section
 3. View your recent browsing history with summaries
-4. Click "Refresh History" to update
 
 **What you'll see:**
 - Page titles and URLs
@@ -116,10 +115,6 @@ The extension automatically remembers pages you've analyzed and summarized.
 2. **Use on relevant pages**
    - The copilot provides better insights when the page relates to your task
    - Try analyzing multiple pages on the same topic to build context
-
-3. **Review browsing history**
-   - The copilot learns from your browsing patterns
-   - It can make connections between pages you've visited
 
 ## Content Script Features
 
@@ -166,7 +161,6 @@ The extension also adds a floating copilot button to every webpage:
 3. **Content Length**
    - Summarization works best on pages with 500-5000 words
    - Very short pages may not provide meaningful summaries
-   - Very long pages are truncated to first ~5000 characters
 
 ### Feature Limitations
 
@@ -185,9 +179,6 @@ Currently, there are no keyboard shortcuts configured. You can add custom shortc
 1. Go to `chrome://extensions/shortcuts`
 2. Find "Browse With Me"
 3. Set your preferred shortcuts
-
-Suggested shortcuts:
-- Open extension popup: `Ctrl+Shift+B` (or `Cmd+Shift+B` on Mac)
 
 ## Example Workflows
 
@@ -222,7 +213,7 @@ Suggested shortcuts:
 **Problem**: Clicking "Summarize" shows an error
 
 **Solutions**:
-- Ensure the page has enough readable content
+- Ensure the page has readable content
 - Try refreshing the page
 - Check AI status indicator shows "AI Ready"
 - Try a different summary type

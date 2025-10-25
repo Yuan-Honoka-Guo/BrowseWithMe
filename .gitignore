@@ -1,1 +1,24 @@
-marked.min.js
+# Development files
+node_modules/
+.DS_Store
+*.log
+*.swp
+*.swo
+*~
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+
+# OS files
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+.cache/
+
+# Build artifacts (if any)
+dist/
+build/

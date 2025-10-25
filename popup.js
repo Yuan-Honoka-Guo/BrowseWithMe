@@ -289,7 +289,9 @@ async function updateTask() {
       action: 'updateTask',
       task: task
     });
-    await analyzePage(); // Re-analyze page with new task
+    if (task != '') {
+      await analyzePage(); // Re-analyze page with new task
+    }
     updateBtn.textContent = 'Task Updated!';
     setTimeout(() => {
       updateBtn.textContent = 'Update Task';

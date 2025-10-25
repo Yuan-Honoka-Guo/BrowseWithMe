@@ -1,1 +1,0 @@
-better fonts and size

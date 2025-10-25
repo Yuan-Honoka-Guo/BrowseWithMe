@@ -215,7 +215,7 @@ textarea {
   border: 1px solid #ddd;
   border-radius: 4px;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 15px;
   resize: vertical;
   margin-bottom: 10px;
 }
@@ -268,7 +268,7 @@ button {
   background: #f8f9fa;
   border-radius: 4px;
   margin-bottom: 12px;
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.6;
 }
 

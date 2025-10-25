@@ -297,6 +297,18 @@ async function generateSuggestion(pageContext, specialInstructions = null) {
 
 // Store browsing context
 async function storeBrowsingContext(pageInfo) {
+  // Avoid duplicates
+  for (const entry of browsingHistory) {
+    if (entry.url === pageInfo.url) {
+      entry.summary = pageInfo.summary; // Update summary
+      entry.timestamp = Date.now();
+      browsingHistory.sort((a, b) => a.timestamp - b.timestamp); // Sort by timestamp
+      // Save to chrome.storage
+      await chrome.storage.local.set({ browsingHistory });
+      return;
+    }
+  }
+
   browsingHistory.push({
     url: pageInfo.url,
     title: pageInfo.title,

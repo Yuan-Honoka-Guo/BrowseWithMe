@@ -289,7 +289,8 @@ async function updateTask() {
       action: 'updateTask',
       task: task
     });
-    updateBtn.textContent = 'Updated!';
+    await analyzePage(); // Re-analyze page with new task
+    updateBtn.textContent = 'Task Updated!';
     setTimeout(() => {
       updateBtn.textContent = 'Update Task';
       updateBtn.disabled = false;
@@ -311,13 +312,36 @@ async function analyzePage() {
   suggestionsContainer.innerHTML = '<p class="loading">Analyzing page content...</p>';
 
   try {
-    // Get page content from content script
-    const response = await chrome.tabs.sendMessage(currentTab.id, { action: 'getPageContent' });
+    // Get page content from content script with fallback
+    console.log('Trying to getPageContent');
+    let response;
+
+    try {
+      response = await chrome.tabs.sendMessage(currentTab.id, { action: 'getPageContent' });
+    } catch (error) {
+      // Content script not loaded, try to inject it
+      console.log('Content script not found, injecting...');
+
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: currentTab.id },
+          files: ['content.js']
+        });
+
+        // Wait a moment for script to initialize
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Try again to get content
+        response = await chrome.tabs.sendMessage(currentTab.id, { action: 'getPageContent' });
+      } catch (injectError) {
+        throw new Error('Cannot access this page. Content scripts are not allowed on chrome:// pages or extension pages.');
+      }
+    }
 
     if (!response || !response.content) {
       throw new Error('Could not extract page content');
     }
-
+    console.log('Trying to send message to generateSuggestion');
     // Generate suggestion
     const result = await chrome.runtime.sendMessage({
       action: 'generateSuggestion',
@@ -328,7 +352,7 @@ async function analyzePage() {
     if (result.error) {
       throw new Error(result.error);
     }
-
+    console.log('Generated suggestions without error');
     // Render markdown to HTML
     const renderedSuggestion = renderMarkdown(result.suggestion);
     suggestionsContainer.innerHTML = `<div class="suggestion-text">${renderedSuggestion}</div>`;

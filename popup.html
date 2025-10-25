@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Browse With Me</title>
+  <title>Knowledge Navigator</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>Browse With Me</h1>
+      <h1>Knowledge Navigator</h1>
       <p class="subtitle">Your AI Browsing Copilot</p>
       
     </header>
@@ -41,7 +41,15 @@
         placeholder="Tell me what you're trying to accomplish..."
         rows="3"
       ></textarea>
-      <button id="updateTaskBtn" class="primary-btn">Update Task</button>
+      <button id="updateTaskBtn" class="primary-btn">Analyze Page</button>
+    </section>
+
+     <section class="suggestions-section">
+      <h2>Page Insights</h2>
+      <div id="suggestionsContainer" class="suggestions-container">
+        <p class="placeholder">Click "Analyze Page" to get AI-powered insights</p>
+      </div>
+      <button id="analyzePageBtn" class="primary-btn">Analyze Page</button>
     </section>
 
     <section class="summary-section">
@@ -60,22 +68,14 @@
       </div>
     </section>
 
-    <section class="suggestions-section">
-      <h2>Page Insights</h2>
-      <div id="suggestionsContainer" class="suggestions-container">
-        <p class="placeholder">Click "Analyze Page" to get AI-powered insights</p>
-      </div>
-      <button id="analyzePageBtn" class="primary-btn">Analyze Page</button>
-    </section>
-
     <section class="history-section">
-      <h2>Browsing Context</h2>
+      <h2>Summarized Pages</h2>
       <div id="historyContainer" class="history-container">
-        <p class="placeholder">No browsing history yet</p>
+        <p class="placeholder">No summarized pages yet</p>
       </div>
       <div style="display: flex; gap: 8px;">
-        <button id="refreshHistoryBtn" class="secondary-btn">Refresh History</button>
-        <button id="clearHistoryBtn" class="secondary-btn" style="background-color: #dc3545; color: white;">Clear All</button>
+        <button id="refreshHistoryBtn" class="secondary-btn" hidden="true">Refresh History</button>
+        <button id="clearHistoryBtn" class="secondary-btn" style="background-color: #dc3545; color: white;">Clean History</button>
       </div>
     </section>
   </div>

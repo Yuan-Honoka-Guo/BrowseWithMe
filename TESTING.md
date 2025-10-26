@@ -28,9 +28,8 @@ Before testing, ensure your system meets these requirements:
 
 1. Navigate to `chrome://flags`
 2. Search for and **enable** these flags:
-   - `#optimization-guide-on-device-model` → **Enabled**
-   - `#prompt-api-for-gemini-nano` → **Enabled**
-   - `#summarization-api-for-gemini-nano` → **Enabled**
+   - `#Prompt API for Gemini Nano with Multimodal Input` → **Enabled**
+   - `#Summarization API for Gemini Nano` → **Enabled**
 3. Click **"Relaunch"** to restart Chrome
 
 **IMPORTANT:** Chrome must be fully restarted after enabling flags. Close all Chrome windows and reopen.
